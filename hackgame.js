@@ -24,6 +24,7 @@ var objectArray = [];
 var bulletArray = [];
 var leftDown = false;
 var rightDown = false;
+var d = new Date();
 
 window.onload = function()
 {
@@ -160,6 +161,10 @@ function check_collision()
 
 function tickEvent()
 {
+    if (new Date() - d > 5000) {
+        d = new Date();
+        //acreateEnemy();
+    }
 	if (!leftDown && !rightDown && playerOne.speedX !=0) {
 		playerOne.speedX = 0;
 	} else if (leftDown && !rightDown && playerOne.speedX > 0) {
@@ -181,6 +186,18 @@ function tickEvent()
 	playerOne.bitmap.x += playerOne.speedX;
 
 	stage.update();
+}
+
+function enemy(image, direction)
+{
+    this.bitmap = new createjs.Bitmap(image);
+
+    if (direction == "right") {
+        this.speedX = 6;
+    } else {
+        this.bitmap.scaleX = -1;
+        this.speedX = -6;
+    }
 }
 
 function bullet(image, direction) 
@@ -251,18 +268,14 @@ function bulletEvent() {
     }
 }
 
+function createEnemy()
+{
+    monster = new enemy(queue.getResult('fish'), 'right');
+}
 
 function createPlayer()
 {
 	playerOne = new player(queue.getResult('player'), playerStartPosX, playerStartPosY - 69);
-
-	//player = new createjs.Bitmap(queue.getResult('player'));
-
-	//player = new createjs.Sprite(playerSpriteSheet);
-	//player.regX = 99;
-    //player.regY = 58;
-    //player.x = playerStartPosX;
-    //player.y = playerStartPosY - 69;
 
     stage.addChild(playerOne.bitmap);
 }

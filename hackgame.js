@@ -124,42 +124,42 @@ function queueLoaded(event)
 
 function handleKeyUp(e)
 {
-	var unicode=e.keyCode? e.keyCode : e.charCode
-	if (unicode == K_LEFT || unicode == K_A) {
-		leftDown = false;
+    var unicode=e.keyCode? e.keyCode : e.charCode
+    if (unicode == K_LEFT || unicode == K_A) {
+        leftDown = false;
     }
     if (unicode == K_RIGHT || unicode == K_D) {
-    	rightDown = false;
+        rightDown = false;
     }
 }
 
 function handleKeyDown(e)
 {
-	var unicode=e.keyCode? e.keyCode : e.charCode
-	if (unicode == K_J) {
-		playerOne.shoot();
-	}
+    var unicode=e.keyCode? e.keyCode : e.charCode
+    if (unicode == K_J) {
+        playerOne.shoot();
+    }
     if (unicode == K_SPACE || unicode == K_UP || unicode == K_W) {
-    	playerOne.jump();
+        playerOne.jump();
     }
     if (unicode == K_LEFT || unicode == K_A) {
-    	leftDown = true;
-    	playerOne.speedX = -moveSpeed;
-    	playerOne.bitmap.scaleX = -1;
+        leftDown = true;
+        playerOne.speedX = -moveSpeed;
+        playerOne.bitmap.scaleX = -1;
     }
     if (unicode == K_RIGHT || unicode == K_D) {
-    	rightDown = true;
-    	playerOne.speedX = moveSpeed;
-    	playerOne.bitmap.scaleX = 1;
+        rightDown = true;
+        playerOne.speedX = moveSpeed;
+        playerOne.bitmap.scaleX = 1;
     }
     
 }
 
 function check_collision() 
 {
-	for (index = 0; index < objectArray.length; index++) {
-		console.log("HI");
-	}
+    for (index = 0; index < objectArray.length; index++) {
+        console.log("HI");
+    }
 }
 
 function tickEvent()
@@ -168,27 +168,27 @@ function tickEvent()
         d = new Date();
         //createEnemy();
     }
-	if (!leftDown && !rightDown && playerOne.speedX !=0) {
-		playerOne.speedX = 0;
-	} else if (leftDown && !rightDown && playerOne.speedX > 0) {
-    	playerOne.speedX = -moveSpeed;
-    	playerOne.bitmap.scaleX = -1;
+    if (!leftDown && !rightDown && playerOne.speedX !=0) {
+        playerOne.speedX = 0;
+    } else if (leftDown && !rightDown && playerOne.speedX > 0) {
+        playerOne.speedX = -moveSpeed;
+        playerOne.bitmap.scaleX = -1;
     } else if (rightDown && !leftDown && playerOne.speedX < 0) {
-    	playerOne.speedX = moveSpeed;
-    	playerOne.bitmap.scaleX = 1;
+        playerOne.speedX = moveSpeed;
+        playerOne.bitmap.scaleX = 1;
     }
 
-	if (playerOne.speedY < 0 || playerOne.bitmap.y <= playerStartPosY - 69) {
-		playerOne.speedY += gravity;
-		playerOne.bitmap.y += playerOne.speedY;
-		playerOne.y += playerOne.speedY;
-	} else {
-		playerOne.speedY = 0;
-		playerOne.bitmap.y = playerStartPosY - 69;
-	}
-	playerOne.bitmap.x += playerOne.speedX;
+    if (playerOne.speedY < 0 || playerOne.bitmap.y <= playerStartPosY - 69) {
+        playerOne.speedY += gravity;
+        playerOne.bitmap.y += playerOne.speedY;
+        playerOne.y += playerOne.speedY;
+    } else {
+        playerOne.speedY = 0;
+        playerOne.bitmap.y = playerStartPosY - 69;
+    }
+    playerOne.bitmap.x += playerOne.speedX;
 
-	stage.update();
+    stage.update();
 }
 
 function enemy(image, direction)
@@ -212,65 +212,65 @@ function enemy(image, direction)
 
 function bullet(image, direction) 
 {
-	this.bitmap = new createjs.Bitmap(image);
-	this.bitmap.y = playerOne.bitmap.y + playerOne.bitmap.getBounds().height/2;
+    this.bitmap = new createjs.Bitmap(image);
+    this.bitmap.y = playerOne.bitmap.y + playerOne.bitmap.getBounds().height/2;
 
-	if (direction == "right") {
-		this.bitmap.x = playerOne.bitmap.x + playerOne.bitmap.getBounds().width/2;
-		this.speedX = 6;
-	} else {
-		this.bitmap.scaleX = -1;
-		this.bitmap.x = playerOne.bitmap.x - 25;
-		this.speedX = -6;
-	}
+    if (direction == "right") {
+        this.bitmap.x = playerOne.bitmap.x + playerOne.bitmap.getBounds().width/2;
+        this.speedX = 6;
+    } else {
+        this.bitmap.scaleX = -1;
+        this.bitmap.x = playerOne.bitmap.x - 25;
+        this.speedX = -6;
+    }
 
-	this.update = function() {
-		this.bitmap.x += this.speedX;
-	}
+    this.update = function() {
+        this.bitmap.x += this.speedX;
+    }
 }
 
 function player(image, x, y)
 {
-	this.bitmap = new createjs.Bitmap(image);
-	this.bitmap.x = x;
-	this.bitmap.y = y;
-	this.bitmap.regX = this.bitmap.getBounds().width/2;
-	//this.bitmap.regY = this.bitmap.getBounds().height/2;
-	this.speedY = 0;
-	this.speedX = 0;
+    this.bitmap = new createjs.Bitmap(image);
+    this.bitmap.x = x;
+    this.bitmap.y = y;
+    this.bitmap.regX = this.bitmap.getBounds().width/2;
+    //this.bitmap.regY = this.bitmap.getBounds().height/2;
+    this.speedY = 0;
+    this.speedX = 0;
 
-	this.x = x;
-	this.y = y;
+    this.x = x;
+    this.y = y;
 
-	this.direction = function() {
-		if (this.bitmap.scaleX > 0) {
-			return "right";
-		}
-		return "left";
-	}
+    this.direction = function() {
+        if (this.bitmap.scaleX > 0) {
+            return "right";
+        }
+        return "left";
+    }
 
-	this.jump = function() {
-		this.speedY = -5;
-	}
+    this.jump = function() {
+        this.speedY = -5;
+    }
 
-	this.updateImage = function(image) {
-		this.bitmap.image = image;
-	}
+    this.updateImage = function(image) {
+        this.bitmap.image = image;
+    }
 
-	this.shoot = function() {
-		console.log("HI");
-		bulletSprite = new bullet(queue.getResult('bullet'), this.direction());
-		stage.addChild(bulletSprite.bitmap);
-		bulletArray.push(bulletSprite);
-	}
+    this.shoot = function() {
+        console.log("HI");
+        bulletSprite = new bullet(queue.getResult('bullet'), this.direction());
+        stage.addChild(bulletSprite.bitmap);
+        bulletArray.push(bulletSprite);
+    }
 
 }
 
 function bulletEvent() {
-	for(var i = 0; i < bulletArray.length; i++) {
+    for(var i = 0; i < bulletArray.length; i++) {
         bulletArray[i].update();
         if (bulletArray[i].bitmap.x > WIDTH || bulletArray[i].bitmap.x < 0) {
-        	bulletArray.remove(i);
+            bulletArray.remove(i);
         }
     }
 }
@@ -299,7 +299,7 @@ function createEnemy()
 
 function createPlayer()
 {
-	playerOne = new player(queue.getResult('player'), playerStartPosX, playerStartPosY - 69);
+    playerOne = new player(queue.getResult('player'), playerStartPosX, playerStartPosY - 69);
 
     stage.addChild(playerOne.bitmap);
 }

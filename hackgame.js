@@ -22,6 +22,7 @@ var score = 0;
 var scoreText;
 var objectArray = [];
 var bulletArray = [];
+var enemyArray = [];
 var leftDown = false;
 var rightDown = false;
 var d = new Date();
@@ -111,6 +112,8 @@ function queueLoaded(event)
     createjs.Ticker.setFPS(60);
     createjs.Ticker.addEventListener('tick', stage);
     createjs.Ticker.addEventListener('tick', tickEvent);
+    createjs.Ticker.addEventListener('tick', enemyEvent);
+    createjs.Ticker.addEventListener('tick', bulletEvent);
 
     // Set up events AFTER the game is loaded
     //window.onmousemove = handleMouseMove;
@@ -163,7 +166,7 @@ function tickEvent()
 {
     if (new Date() - d > 5000) {
         d = new Date();
-        //acreateEnemy();
+        //createEnemy();
     }
 	if (!leftDown && !rightDown && playerOne.speedX !=0) {
 		playerOne.speedX = 0;
@@ -193,10 +196,17 @@ function enemy(image, direction)
     this.bitmap = new createjs.Bitmap(image);
 
     if (direction == "right") {
-        this.speedX = 6;
+        this.bitmap.x = 0 - 64;
+        this.speedX = 4;
     } else {
+        this.bitmap.x = WIDTH + 64;
         this.bitmap.scaleX = -1;
-        this.speedX = -6;
+        this.speedX = -4;
+    }
+    this.bitmap.y = playerStartPosY - 60;
+
+    this.update = function() {
+        this.bitmap.x += this.speedX;
     }
 }
 
@@ -252,9 +262,6 @@ function player(image, x, y)
 		bulletSprite = new bullet(queue.getResult('bullet'), this.direction());
 		stage.addChild(bulletSprite.bitmap);
 		bulletArray.push(bulletSprite);
-		createjs.Ticker.setFPS(60);
-    	createjs.Ticker.addEventListener('tick', stage);
-    	createjs.Ticker.addEventListener('tick', bulletEvent);
 	}
 
 }
@@ -268,9 +275,26 @@ function bulletEvent() {
     }
 }
 
+function enemyEvent() {
+    for(var i = 0; i < enemyArray.length; i++) {
+        enemyArray[i].update();
+        if (enemyArray[i].bitmap.x > WIDTH + 100 || enemyArray[i].bitmap.x < - 100) {
+            enemyArray.remove(i);
+        }
+    }
+}
+
 function createEnemy()
 {
-    monster = new enemy(queue.getResult('fish'), 'right');
+    var direction;
+    if (Math.random() >= .5) {
+        direction = 'right';
+    } else {
+        direction = 'left'
+    }
+    monster = new enemy(queue.getResult('fish'), direction);
+    stage.addChild(monster.bitmap);
+    enemyArray.push(monster);
 }
 
 function createPlayer()

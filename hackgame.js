@@ -6,7 +6,7 @@ var playerStartPosX = WIDTH/2;
 var playerStartPosY = HEIGHT - 110;
 var mouseXPosition;
 var mouseYPosition;
-var moveSpeed = 4;
+var moveSpeed = 4.5;
 var K_SPACE = 32;
 var K_J = 74;
 var K_A = 65;
@@ -16,7 +16,7 @@ var K_UP = 38;
 var K_DOWN = 40;
 var K_LEFT = 37;
 var K_RIGHT = 39;
-var gravity = 0.1;
+var gravity = 0.11;
 var stage;
 var score = 0;
 var scoreText;
@@ -114,6 +114,8 @@ function queueLoaded(event)
     createjs.Ticker.addEventListener('tick', tickEvent);
     createjs.Ticker.addEventListener('tick', enemyEvent);
     createjs.Ticker.addEventListener('tick', bulletEvent);
+    createjs.Ticker.addEventListener('tick', checkCollision);
+
 
     // Set up events AFTER the game is loaded
     //window.onmousemove = handleMouseMove;
@@ -155,10 +157,20 @@ function handleKeyDown(e)
     
 }
 
-function check_collision() 
+function checkCollision() 
 {
-    for (index = 0; index < objectArray.length; index++) {
-        console.log("HI");
+    for (index = 0; index < enemyArray.length; index++) {
+        for (i = 0; i < bulletArray.length; i++) {
+            if (ndgmr.checkRectCollision(enemyArray[index].bitmap,bulletArray[i].bitmap)) {
+                score += 10;
+                scoreText.text = "SCORE: " + score.toString();
+                stage.removeChild(enemyArray[index].bitmap);
+                stage.removeChild(bulletArray[i].bitmap);
+                enemyArray.remove(index);
+                bulletArray.remove(i);
+                break;
+            }
+        }
     }
 }
 
@@ -187,8 +199,6 @@ function tickEvent()
         playerOne.bitmap.y = playerStartPosY - 69;
     }
     playerOne.bitmap.x += playerOne.speedX;
-
-    stage.update();
 }
 
 function enemy(image, direction)
@@ -258,7 +268,6 @@ function player(image, x, y)
     }
 
     this.shoot = function() {
-        console.log("HI");
         bulletSprite = new bullet(queue.getResult('bullet'), this.direction());
         stage.addChild(bulletSprite.bitmap);
         bulletArray.push(bulletSprite);
@@ -270,6 +279,7 @@ function bulletEvent() {
     for(var i = 0; i < bulletArray.length; i++) {
         bulletArray[i].update();
         if (bulletArray[i].bitmap.x > WIDTH || bulletArray[i].bitmap.x < 0) {
+            stage.removeChild(bulletArray[i].bitmap);
             bulletArray.remove(i);
         }
     }
@@ -279,6 +289,7 @@ function enemyEvent() {
     for(var i = 0; i < enemyArray.length; i++) {
         enemyArray[i].update();
         if (enemyArray[i].bitmap.x > WIDTH + 100 || enemyArray[i].bitmap.x < - 100) {
+            stage.removeChild(enemyArray[i].bitmap);
             enemyArray.remove(i);
         }
     }

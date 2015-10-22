@@ -24,6 +24,7 @@ var objectArray = [];
 var bulletArray = [];
 var enemyArray = [];
 var enemyImg = [];
+var health = [];
 var leftDown = false;
 var rightDown = false;
 var d = new Date();
@@ -209,8 +210,6 @@ function tickEvent()
 
 function enemy(image, direction, imgString)
 {
-    console.log(imgString);
-    console.log(direction);
     this.bitmap = new createjs.Bitmap(image);
 
     if (direction == "right") {
@@ -334,6 +333,21 @@ function player(image, x, y)
         bulletArray.push(bulletSprite);
     }
 
+    this.addHeart = function() {
+        heartSprite = new heart(queue.getResult('heart'), health.length);
+        stage.addChild(heartSprite.bitmap);
+        health.push(heartSprite);
+    }
+    this.addHeart();
+    this.addHeart();
+    this.addHeart();
+}
+
+function heart(image, offset) {
+    this.bitmap = new createjs.Bitmap(image);
+    console.log(WIDTH - offset*50 + 5);
+    this.bitmap.x = WIDTH -50*offset -55;
+    this.bitmap.y = 0;
 }
 
 function bulletEvent() {

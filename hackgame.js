@@ -182,7 +182,7 @@ function checkCollision()
 
 function tickEvent()
 {
-    if (new Date() - d > 5000) {
+    if (new Date() - d > 2000) {
         d = new Date();
         createEnemy();
     }
@@ -196,7 +196,7 @@ function tickEvent()
         playerOne.bitmap.scaleX = 1;
     }
 
-    if (playerOne.speedY < 0 || playerOne.bitmap.y <= playerStartPosY - 69) {
+    if (playerOne.speedY < 0 || playerOne.bitmap.y <= playerStartPosY - 74) {
         playerOne.speedY += gravity;
         playerOne.bitmap.y += playerOne.speedY;
         playerOne.y += playerOne.speedY;
@@ -209,6 +209,8 @@ function tickEvent()
 
 function enemy(image, direction, imgString)
 {
+    console.log(imgString);
+    console.log(direction);
     this.bitmap = new createjs.Bitmap(image);
 
     if (direction == "right") {
@@ -226,7 +228,7 @@ function enemy(image, direction, imgString)
         this.update = function() {
             this.bitmap.x += this.speedX;
             this.bitmap.y += this.speedY;
-            if (this.speedY < 0 || this.bitmap.y <= playerStartPosY - 60) {
+            if (this.speedY < 0 || this.bitmap.y <= playerStartPosY - 65) {
                 this.speedY += gravity;
                 this.bitmap.y += this.speedY;
             } else {
@@ -234,7 +236,6 @@ function enemy(image, direction, imgString)
                 this.bitmap.y = playerStartPosY - 60;
             }
             if (this.bitmap.y >= playerStartPosY - 60 && Math.random() >= .99) {
-                console.log("need to jump")
                 this.jump();
             }
         }
@@ -242,9 +243,28 @@ function enemy(image, direction, imgString)
 
     if (imgString == 'phantom') {
         this.bitmap.y = playerStartPosY - 250;
+        if (direction == "right") {
+            this.bitmap.x = 0 - 64;
+            this.speedX = 3.5;
+        } else {
+            this.bitmap.x = WIDTH + 64;
+            this.bitmap.scaleX = -1;
+            this.speedX = -3.5;
+        }
+        var specialMove = false;
         this.update = function() {
             this.bitmap.x += this.speedX;
             this.bitmap.y += this.speedY;
+            if (!specialMove && Math.abs(this.bitmap.x - playerOne.bitmap.x) < 200) {
+                this.speedY = 2;
+                specialMove = true;
+            }
+            if (this.bitmap.y <= playerStartPosY - 80) {
+                this.bitmap.y += this.speedY;
+            } else {
+                this.speedY = 0;
+                this.bitmap.y = playerStartPosY - 80;
+            }
         }
     }
 

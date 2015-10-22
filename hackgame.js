@@ -16,13 +16,14 @@ var K_UP = 38;
 var K_DOWN = 40;
 var K_LEFT = 37;
 var K_RIGHT = 39;
-var gravity = 0.11;
+var gravity = 0.16;
 var stage;
 var score = 0;
 var scoreText;
 var objectArray = [];
 var bulletArray = [];
 var enemyArray = [];
+var enemyImg = [];
 var leftDown = false;
 var rightDown = false;
 var d = new Date();
@@ -55,12 +56,17 @@ window.onload = function()
     queue.loadManifest([
         {id: 'backgroundImage', src: 'assets/background.jpg'},
         {id: 'fish', src: 'assets/fish.png'},
+        {id: 'megamanRed', src: 'assets/megaman_red.png'},
         {id: 'heart', src: 'assets/heart.png'},
         {id: 'phantom', src: 'assets/phantom.png'},
         {id: 'player', src: 'assets/player.png'},
         {id: 'bullet', src: 'assets/bullet.png'},
     ]);
     queue.load();
+
+    enemyImg.push('fish');
+    enemyImg.push('megamanRed');
+    enemyImg.push('phantom');
 
     /*
      *      Create a timer that updates once per second
@@ -178,7 +184,7 @@ function tickEvent()
 {
     if (new Date() - d > 5000) {
         d = new Date();
-        //createEnemy();
+        createEnemy();
     }
     if (!leftDown && !rightDown && playerOne.speedX !=0) {
         playerOne.speedX = 0;
@@ -201,7 +207,7 @@ function tickEvent()
     playerOne.bitmap.x += playerOne.speedX;
 }
 
-function enemy(image, direction)
+function enemy(image, direction, imgString)
 {
     this.bitmap = new createjs.Bitmap(image);
 
@@ -213,10 +219,45 @@ function enemy(image, direction)
         this.bitmap.scaleX = -1;
         this.speedX = -4;
     }
-    this.bitmap.y = playerStartPosY - 60;
+    this.speedY = 0;
 
-    this.update = function() {
-        this.bitmap.x += this.speedX;
+    if (imgString == 'fish') {
+        this.bitmap.y = playerStartPosY - 60;
+        this.update = function() {
+            this.bitmap.x += this.speedX;
+            this.bitmap.y += this.speedY;
+            if (this.speedY < 0 || this.bitmap.y <= playerStartPosY - 60) {
+                this.speedY += gravity;
+                this.bitmap.y += this.speedY;
+            } else {
+                this.speedY = 0;
+                this.bitmap.y = playerStartPosY - 60;
+            }
+            if (this.bitmap.y >= playerStartPosY - 60 && Math.random() >= .99) {
+                console.log("need to jump")
+                this.jump();
+            }
+        }
+    }
+
+    if (imgString == 'phantom') {
+        this.bitmap.y = playerStartPosY - 250;
+        this.update = function() {
+            this.bitmap.x += this.speedX;
+            this.bitmap.y += this.speedY;
+        }
+    }
+
+    if (imgString == 'megamanRed') {
+        this.bitmap.y = playerStartPosY - 60;
+        this.update = function() {
+            this.bitmap.x += this.speedX;
+            this.bitmap.y += this.speedY;
+        }
+    }
+
+    this.jump = function() {
+        this.speedY = -5;
     }
 }
 
@@ -227,11 +268,11 @@ function bullet(image, direction)
 
     if (direction == "right") {
         this.bitmap.x = playerOne.bitmap.x + playerOne.bitmap.getBounds().width/2;
-        this.speedX = 6;
+        this.speedX = 6.5;
     } else {
         this.bitmap.scaleX = -1;
         this.bitmap.x = playerOne.bitmap.x - 25;
-        this.speedX = -6;
+        this.speedX = -6.5;
     }
 
     this.update = function() {
@@ -260,7 +301,7 @@ function player(image, x, y)
     }
 
     this.jump = function() {
-        this.speedY = -5;
+        this.speedY = -7;
     }
 
     this.updateImage = function(image) {
@@ -303,7 +344,8 @@ function createEnemy()
     } else {
         direction = 'left'
     }
-    monster = new enemy(queue.getResult('fish'), direction);
+    imgString = enemyImg[Math.floor(Math.random()*enemyImg.length)];
+    monster = new enemy(queue.getResult(imgString), direction, imgString);
     stage.addChild(monster.bitmap);
     enemyArray.push(monster);
 }

@@ -12,6 +12,7 @@ var K_J = 74;
 var K_A = 65;
 var K_D = 68;
 var K_W = 87;
+var K_P = 80;
 var K_UP = 38;
 var K_DOWN = 40;
 var K_LEFT = 37;
@@ -28,6 +29,8 @@ var health = [];
 var leftDown = false;
 var rightDown = false;
 var d = new Date();
+var paused = false;
+var playing = false;
 
 window.onload = function()
 {
@@ -56,6 +59,9 @@ window.onload = function()
      */
     queue.loadManifest([
         {id: 'backgroundImage', src: 'assets/background.jpg'},
+        {id: 'pause', src: 'assets/grey.png'},
+        {id: 'menu', src: 'assets/mainMenu.jpg'},
+        {id: 'start', src: 'assets/start.png'},
         {id: 'fish', src: 'assets/fish.png'},
         {id: 'megamanRed', src: 'assets/megaman_red.png'},
         {id: 'heart', src: 'assets/heart.png'},
@@ -83,7 +89,22 @@ Array.prototype.remove = function(from, to) {
   return this.push.apply(this, rest);
 };
 
-function queueLoaded(event)
+function queueLoaded(event) {
+    var mainMenu = new createjs.Bitmap(queue.getResult("menu"));
+    stage.addChild(mainMenu);
+
+    startButton = new createjs.Bitmap(queue.getResult("start"));
+    startButton.x = WIDTH/2 - 75;
+    startButton.y = HEIGHT/2 - 100;
+    stage.addChild(startButton);
+
+    createjs.Ticker.setFPS(60);
+    createjs.Ticker.addEventListener('tick', stage);
+
+    window.onmousedown = handleMouseDown;
+}
+
+function playGame()
 {
     // Add background image
     var backgroundImage = new createjs.Bitmap(queue.getResult("backgroundImage"))
@@ -94,14 +115,6 @@ function queueLoaded(event)
     scoreText.x = 10;
     scoreText.y = 10;
     stage.addChild(scoreText);
-
-    //Ad Timer
-    /*
-    timerText = new createjs.Text("Time: " + gameTime.toString(), "36px Arial", "#FFF");
-    timerText.x = 800;
-    timerText.y = 10;
-    stage.addChild(timerText);
-    */
 
     playerSpriteSheet = new createjs.SpriteSheet({
         "images": [queue.getResult('player')],
@@ -131,9 +144,26 @@ function queueLoaded(event)
     window.onkeyup = handleKeyUp;
 }
 
+function handleMouseDown(e) {
+    xPos = event.clientX;
+    yPos = event.clientY;
+    startLeftX = startButton.x;
+    startLeftY = startButton.y;
+
+    if (!playing && xPos > startLeftX && xPos < startLeftX + 120 && yPos > startLeftY && yPos < startLeftY + 40){
+        playGame();
+        playing = true;
+    }
+
+    
+}
+
 function handleKeyUp(e)
 {
     var unicode=e.keyCode? e.keyCode : e.charCode
+    if (paused) {
+        return;
+    }
     if (unicode == K_LEFT || unicode == K_A) {
         leftDown = false;
     }
@@ -145,6 +175,23 @@ function handleKeyUp(e)
 function handleKeyDown(e)
 {
     var unicode=e.keyCode? e.keyCode : e.charCode
+    if (unicode == K_P && paused) {
+        console.log("unpause bro");
+        paused = false;
+        stage.removeChild(pauseScreen);
+        return;
+    }
+    if (paused) {
+        return;
+    }
+    if (unicode == K_P) {
+        pauseScreen = new createjs.Bitmap(queue.getResult("pause"))
+        stage.addChild(pauseScreen);
+        paused = true;
+        rightDown = false;
+        leftDown = false;
+        return;
+    }
     if (unicode == K_J) {
         playerOne.shoot();
     }
@@ -166,7 +213,16 @@ function handleKeyDown(e)
 
 function checkCollision() 
 {
+    if (paused) {
+        return;
+    }
     for (index = 0; index < enemyArray.length; index++) {
+        if (ndgmr.checkRectCollision(enemyArray[index].bitmap,playerOne.bitmap)) {
+            playerOne.removeHeart();
+            stage.removeChild(enemyArray[index].bitmap);
+            enemyArray.remove(index);
+            break;
+        }
         for (i = 0; i < bulletArray.length; i++) {
             if (ndgmr.checkRectCollision(enemyArray[index].bitmap,bulletArray[i].bitmap)) {
                 score += 10;
@@ -183,6 +239,9 @@ function checkCollision()
 
 function tickEvent()
 {
+    if (paused) {
+        return;
+    }
     if (new Date() - d > 2000) {
         d = new Date();
         createEnemy();
@@ -338,6 +397,12 @@ function player(image, x, y)
         stage.addChild(heartSprite.bitmap);
         health.push(heartSprite);
     }
+    this.removeHeart = function() {
+        console.log(health.length);
+        tempHealth = health[health.length - 1];
+        stage.removeChild(tempHealth.bitmap);
+        health.remove(health.length - 1);
+    }
     this.addHeart();
     this.addHeart();
     this.addHeart();
@@ -345,12 +410,14 @@ function player(image, x, y)
 
 function heart(image, offset) {
     this.bitmap = new createjs.Bitmap(image);
-    console.log(WIDTH - offset*50 + 5);
     this.bitmap.x = WIDTH -50*offset -55;
     this.bitmap.y = 0;
 }
 
 function bulletEvent() {
+    if (paused) {
+        return;
+    }
     for(var i = 0; i < bulletArray.length; i++) {
         bulletArray[i].update();
         if (bulletArray[i].bitmap.x > WIDTH || bulletArray[i].bitmap.x < 0) {
@@ -361,6 +428,9 @@ function bulletEvent() {
 }
 
 function enemyEvent() {
+    if (paused) {
+        return;
+    }
     for(var i = 0; i < enemyArray.length; i++) {
         enemyArray[i].update();
         if (enemyArray[i].bitmap.x > WIDTH + 100 || enemyArray[i].bitmap.x < - 100) {

@@ -31,6 +31,7 @@ var rightDown = false;
 var d = new Date();
 var paused = false;
 var playing = false;
+var gameover = false;
 
 window.onload = function()
 {
@@ -144,6 +145,20 @@ function playGame()
     window.onkeyup = handleKeyUp;
 }
 
+function clearStage() {
+    gameover = true;
+    createjs.Ticker.removeAllEventListeners();
+    stage.removeAllChildren();
+    stage.update();
+    objectArray = [];
+    bulletArray = [];
+    enemyArray = [];
+    health = [];
+    score = 0;
+    scoreText.text = "SCORE: " + score.toString();
+
+}
+
 function handleMouseDown(e) {
     xPos = event.clientX;
     yPos = event.clientY;
@@ -218,8 +233,8 @@ function checkCollision()
     }
     for (index = 0; index < enemyArray.length; index++) {
         if (ndgmr.checkRectCollision(enemyArray[index].bitmap,playerOne.bitmap)) {
-            playerOne.removeHeart();
             stage.removeChild(enemyArray[index].bitmap);
+            playerOne.removeHeart();
             enemyArray.remove(index);
             break;
         }
@@ -402,6 +417,13 @@ function player(image, x, y)
         tempHealth = health[health.length - 1];
         stage.removeChild(tempHealth.bitmap);
         health.remove(health.length - 1);
+        if (health.length == 0) {
+            clearStage();
+            playGame();
+        }
+    }
+    this.health = function() {
+        return health.length;
     }
     this.addHeart();
     this.addHeart();

@@ -32,6 +32,11 @@ var d = new Date();
 var paused = false;
 var playing = false;
 var gameover = false;
+var difficulty = 1;
+var hasJumped = false;
+var newStage = false;
+var bowserDead = true;
+var bowserSpawned = false;
 
 window.onload = function()
 {
@@ -60,6 +65,9 @@ window.onload = function()
      */
     queue.loadManifest([
         {id: 'backgroundImage', src: 'assets/background.jpg'},
+        {id: 'megaBoss', src: 'assets/megaman.png'},
+        {id: 'bowser', src: 'assets/bowser.png'},
+        {id: 'bossBackGround', src: 'assets/level2.jpg'},
         {id: 'pause', src: 'assets/grey.png'},
         {id: 'menu', src: 'assets/mainMenu.jpg'},
         {id: 'start', src: 'assets/start.png'},
@@ -91,7 +99,7 @@ Array.prototype.remove = function(from, to) {
 };
 
 function queueLoaded(event) {
-    var mainMenu = new createjs.Bitmap(queue.getResult("menu"));
+    mainMenu = new createjs.Bitmap(queue.getResult("menu"));
     stage.addChild(mainMenu);
 
     startButton = new createjs.Bitmap(queue.getResult("start"));
@@ -108,7 +116,7 @@ function queueLoaded(event) {
 function playGame()
 {
     // Add background image
-    var backgroundImage = new createjs.Bitmap(queue.getResult("backgroundImage"))
+    backgroundImage = new createjs.Bitmap(queue.getResult("backgroundImage"))
     stage.addChild(backgroundImage);
 
     //Add Score
@@ -137,6 +145,16 @@ function playGame()
     createjs.Ticker.addEventListener('tick', bulletEvent);
     createjs.Ticker.addEventListener('tick', checkCollision);
 
+    var audioPath = "assets/";
+    var sounds = [
+    {id:"shoot", src:"Shot.mp3"},
+    //{id:"Thunder", src:"Thunder1.ogg"}
+    ];
+    //createjs.Sound.alternateExtensions = ["mp3"];
+
+    //createjs.Sound.addEventListener("fileload", handleLoad);
+    //createjs.Sound.registerSound("assets/Shot.mp3", "shoot");
+
 
     // Set up events AFTER the game is loaded
     //window.onmousemove = handleMouseMove;
@@ -146,6 +164,10 @@ function playGame()
 }
 
 function clearStage() {
+    newStage = false;
+    bowserDead = true;
+    bowserSpawned = false;
+    difficulty = 1;
     gameover = true;
     createjs.Ticker.removeAllEventListeners();
     stage.removeAllChildren();
@@ -156,7 +178,17 @@ function clearStage() {
     health = [];
     score = 0;
     scoreText.text = "SCORE: " + score.toString();
+}
 
+function createNewStage() {
+    backgroundImage.image = queue.getResult("bossBackGround")
+
+    var monster = new enemy(queue.getResult("bowser"), "left", 'bowser');
+    stage.addChild(monster.bitmap);
+    enemyArray.push(monster);
+}
+
+function handleLoad(event) {
 }
 
 function handleMouseDown(e) {
@@ -166,11 +198,12 @@ function handleMouseDown(e) {
     startLeftY = startButton.y;
 
     if (!playing && xPos > startLeftX && xPos < startLeftX + 120 && yPos > startLeftY && yPos < startLeftY + 40){
+        stage.removeChild(mainMenu);
+        stage.removeChild(startButton);
+
         playGame();
         playing = true;
     }
-
-    
 }
 
 function handleKeyUp(e)
@@ -208,10 +241,12 @@ function handleKeyDown(e)
         return;
     }
     if (unicode == K_J) {
+        //createjs.Sound.play("shoot");
         playerOne.shoot();
     }
     if (unicode == K_SPACE || unicode == K_UP || unicode == K_W) {
         playerOne.jump();
+        hasJumped = true;
     }
     if (unicode == K_LEFT || unicode == K_A) {
         leftDown = true;
@@ -232,19 +267,33 @@ function checkCollision()
         return;
     }
     for (index = 0; index < enemyArray.length; index++) {
-        if (ndgmr.checkRectCollision(enemyArray[index].bitmap,playerOne.bitmap)) {
+        if ((enemyArray[index] != undefined) && (playerOne != undefined) && ndgmr.checkRectCollision(enemyArray[index].bitmap,playerOne.bitmap)) {
+            if (enemyArray[index].imgString == 'bowser') {
+                bowserDead = true;
+                bowserSpawned = true;
+            }
             stage.removeChild(enemyArray[index].bitmap);
             playerOne.removeHeart();
             enemyArray.remove(index);
             break;
         }
         for (i = 0; i < bulletArray.length; i++) {
-            if (ndgmr.checkRectCollision(enemyArray[index].bitmap,bulletArray[i].bitmap)) {
-                score += 10;
-                scoreText.text = "SCORE: " + score.toString();
-                stage.removeChild(enemyArray[index].bitmap);
+            if ((enemyArray[index] != undefined) && (playerOne != undefined) && ndgmr.checkRectCollision(enemyArray[index].bitmap,bulletArray[i].bitmap)) {
+                if (enemyArray[index].health == 1) {
+                    enemyArray[index].health -= 1;
+                    if (enemyArray[index].imgString == 'bowser') {
+                        bowserDead = true;
+                        score += 100;
+                    } else {
+                        score += 10;
+                    }
+                    scoreText.text = "SCORE: " + score.toString();
+                    stage.removeChild(enemyArray[index].bitmap);
+                    enemyArray.remove(index);
+                } else if (enemyArray[index].health > 1) {
+                    enemyArray[index].health -= 1;
+                }
                 stage.removeChild(bulletArray[i].bitmap);
-                enemyArray.remove(index);
                 bulletArray.remove(i);
                 break;
             }
@@ -257,7 +306,15 @@ function tickEvent()
     if (paused) {
         return;
     }
-    if (new Date() - d > 2000) {
+    if (score >= 250 && !newStage) {
+        bowserSpawned = true;
+        createNewStage();
+        newStage = true;
+    }
+    if (difficulty > .3) {
+        difficulty = 1 - score/1000
+    }
+    if (new Date() - d > difficulty*2000 && (bowserDead && bowserSpawned || bowserDead && !bowserSpawned)) {
         d = new Date();
         createEnemy();
     }
@@ -276,6 +333,7 @@ function tickEvent()
         playerOne.bitmap.y += playerOne.speedY;
         playerOne.y += playerOne.speedY;
     } else {
+        hasJumped = false;
         playerOne.speedY = 0;
         playerOne.bitmap.y = playerStartPosY - 69;
     }
@@ -285,6 +343,8 @@ function tickEvent()
 function enemy(image, direction, imgString)
 {
     this.bitmap = new createjs.Bitmap(image);
+    this.imgString = imgString;
+    this.health = 1;
 
     if (direction == "right") {
         this.bitmap.x = 0 - 64;
@@ -295,6 +355,35 @@ function enemy(image, direction, imgString)
         this.speedX = -4;
     }
     this.speedY = 0;
+
+    if (imgString == 'bowser') {
+        bowserDead = false;
+        this.bitmap.y = playerStartPosY - 198;
+        if (direction == "right") {
+            this.bitmap.x = 0 - 64;
+            this.speedX = 1;
+        } else {
+            this.bitmap.x = WIDTH + 64;
+            this.bitmap.scaleX = -1;
+            this.speedX = -1;
+        }
+        this.speedY = 0;
+        this.health = 50;
+        this.update = function() {
+            this.bitmap.x += this.speedX;
+            this.bitmap.y += this.speedY;
+            if (this.speedY < 0 || this.bitmap.y <= playerStartPosY - 198) {
+                this.speedY += gravity;
+                this.bitmap.y += this.speedY;
+            } else {
+                this.speedY = 0;
+                this.bitmap.y = playerStartPosY - 198;
+            }
+            if (this.bitmap.y >= playerStartPosY - 198 && Math.random() >= .99) {
+                this.jump();
+            }
+        }
+    }
 
     if (imgString == 'fish') {
         this.bitmap.y = playerStartPosY - 60;
@@ -342,6 +431,7 @@ function enemy(image, direction, imgString)
     }
 
     if (imgString == 'megamanRed') {
+        this.health = 2;
         this.bitmap.y = playerStartPosY - 60;
         this.update = function() {
             this.bitmap.x += this.speedX;
@@ -394,7 +484,9 @@ function player(image, x, y)
     }
 
     this.jump = function() {
-        this.speedY = -7;
+        if (!hasJumped) {
+            this.speedY = -7;
+        }
     }
 
     this.updateImage = function(image) {
@@ -454,10 +546,12 @@ function enemyEvent() {
         return;
     }
     for(var i = 0; i < enemyArray.length; i++) {
-        enemyArray[i].update();
-        if (enemyArray[i].bitmap.x > WIDTH + 100 || enemyArray[i].bitmap.x < - 100) {
-            stage.removeChild(enemyArray[i].bitmap);
-            enemyArray.remove(i);
+        if (enemyArray[i] != undefined) {
+            enemyArray[i].update();
+            if (enemyArray[i].bitmap.x > WIDTH + 100 || enemyArray[i].bitmap.x < - 100) {
+                stage.removeChild(enemyArray[i].bitmap);
+                enemyArray.remove(i);
+            }
         }
     }
 }
